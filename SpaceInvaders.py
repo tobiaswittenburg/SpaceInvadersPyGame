@@ -1,6 +1,7 @@
 import pygame  # Importiere das Pygame-Modul
 import random  # Importiere das Random-Modul für zufällige Positionen
 from SplashScreen import SplashScreen  # Importiere die SplashScreen-Klasse
+from Enemy import Enemy  # Importiere die Enemy-Klasse
 
 class SpaceInvaders:
 
@@ -29,7 +30,6 @@ class SpaceInvaders:
         self.icon = pygame.image.load('img/player.png')  # Lade das Icon-Bild
         pygame.display.set_icon(self.icon)
 
-
     def initGame(self):
         # Spieler
         self.playerImg = pygame.image.load('img/player.png')  # Lade das Spieler-Bild
@@ -47,13 +47,7 @@ class SpaceInvaders:
         self.enemyY_change = []
         self.num_of_enemies = 6  # Anzahl der Gegner
 
-        for i in range(self.num_of_enemies):
-            self.enemyImg.append(pygame.image.load('img/enemy.png'))  # Lade das Gegner-Bild
-            self.enemyImg[i] = pygame.transform.scale(self.enemyImg[i], self.ENEMY_SIZE)
-            self.enemyX.append(random.randint(0, 736))  # Zufällige X-Position des Gegners
-            self.enemyY.append(random.randint(50, 150))  # Zufällige Y-Position des Gegners
-            self.enemyX_change.append(4)  # Bewegung des Gegners auf der X-Achse
-            self.enemyY_change.append(40)  # Bewegung des Gegners auf der Y-Achse
+        self.enemies = [Enemy('img/enemy.png', self.SCREEN_WIDTH, self.SCREEN_HEIGHT) for _ in range(6)]
 
         # Kugel
         self.bulletImg = pygame.image.load('img/bullet.png')  # Lade das Kugel-Bild
@@ -85,11 +79,6 @@ class SpaceInvaders:
     def drawPlayer(self, x, y):
         self.screen.blit(self.playerImg, (x, y))  # Zeichnen des Spielers auf dem Bildschirm
 
-    
-    def drawEnemy(self, x, y, i):
-        self.screen.blit(self.enemyImg[i], (x, y))  # Zeichnen des Gegners auf dem Bildschirm
-
-
     def fire_bullet(self):
         self.bulletX = self.playerX  # Setze die Kugelposition auf die Spielerposition
         self.bulletY = self.playerY
@@ -114,33 +103,6 @@ class SpaceInvaders:
             self.playerY = 0
         elif self.playerY >= self.SCREEN_HEIGHT - 20:
             self.playerY = self.SCREEN_HEIGHT - 20
-
-    def moveEnemies(self):
-        for i in range(self.num_of_enemies):
-            if self.enemyY[i] > 440:
-                for j in range(self.num_of_enemies):
-                    self.enemyY[j] = 2000  # Bewege alle Gegner aus dem Bildschirm
-                self.drawGameOverText()  # Zeige den Spielende-Text
-                break
-        
-            self.enemyX[i] += self.enemyX_change[i]  # Aktualisiere die Gegnerposition
-            if self.enemyX[i] <= 0:
-                self.enemyX_change[i] = 4  # Bewege den Gegner nach rechts
-                self.enemyY[i] += self.enemyY_change[i]  # Bewege den Gegner nach unten
-            elif self.enemyX[i] >= 736:
-                self.enemyX_change[i] = -4  # Bewege den Gegner nach links
-                self.enemyY[i] += self.enemyY_change[i]  # Bewege den Gegner nach unten
-
-            collision = self.isCollision(self.enemyX[i], self.enemyY[i], self.bulletX, self.bulletY)  # Überprüfe auf Kollision
-
-            if collision:
-                self.bulletY = 480  # Setze die Kugelposition zurück
-                self.bullet_state = "ready"  # Setze den Kugelzustand zurück
-                self.score_value += 1  # Erhöhe den Punktestand
-                self.enemyX[i] = random.randint(0, 736)  # Setze die Gegnerposition zurück
-                self.enemyY[i] = random.randint(50, 150)  # Setze die Gegnerposition zurück
-
-            self.drawEnemy(self.enemyX[i], self.enemyY[i], i)  # Zeichne den Gegner
 
     def isCollision(self, enemyX, enemyY, bulletX, bulletY):
         distance = ((enemyX - bulletX)**2 + (enemyY - bulletY)**2)**0.5  # Berechnung der Entfernung zwischen Kugel und Gegner
@@ -176,7 +138,6 @@ class SpaceInvaders:
                         if event.key == pygame.K_SPACE:  # Überprüfe, ob die Leertaste gedrückt wurde
                             if self.bullet_state == "ready":
                                 self.fire_bullet()  # Feuere die Kugel ab
-
                       
                 if event.type == pygame.KEYUP:  # Überprüfe, ob eine Taste losgelassen wurde
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -192,11 +153,29 @@ class SpaceInvaders:
                         if self.bullet_state == "ready":
                             self.fire_bullet()  # Feuere die Kugel ab
 
-
             if not pause:
                 self.movePlayer()
                 self.moveBullet()
-                self.moveEnemies()
+                # self.moveEnemies()
+
+                for enemy in self.enemies:
+                    enemy.move()
+                    if enemy.y > 440:
+                        for e in self.enemies:
+                            e.y = 2000  # Bewege alle Gegner aus dem Bildschirm
+                        self.drawGameOverText()  # Zeige den Spielende-Text
+                        break
+
+                    collision = self.isCollision(enemy.x, enemy.y, self.bulletX, self.bulletY)  # Überprüfe auf Kollision
+                    if collision:
+                        self.bulletY = 480  # Setze die Kugelposition zurück
+                        self.bullet_state = "ready"  # Setze den Kugelzustand zurück
+                        self.score_value += 1  # Erhöhe den Punktestand
+                        enemy.reset_position()  # Setze die Gegnerposition zurück
+
+                    enemy.draw(self.screen)  # Zeichne den Gegner
+
+
 
                 if self.bulletY <= 0:
                     self.bulletY = 480  # Setze die Kugelposition zurück
@@ -213,5 +192,3 @@ class SpaceInvaders:
 
             pygame.display.update()  # Aktualisiere den Bildschirm
             self.clock.tick(60)
-            
-    
