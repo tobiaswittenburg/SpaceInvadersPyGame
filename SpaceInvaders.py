@@ -1,5 +1,6 @@
 import pygame  # Importiere das Pygame-Modul
 import random  # Importiere das Random-Modul für zufällige Positionen
+from SplashScreen import SplashScreen  # Importiere die SplashScreen-Klasse
 
 class SpaceInvaders:
 
@@ -21,6 +22,7 @@ class SpaceInvaders:
         # Setze die Bildschirmgröße
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()  # Erstelle eine Clock-Instanz
+        self.splashScreen = SplashScreen(self.screen)  # Erstelle eine SplashScreen-Instanz
 
         # Titel und Icon
         pygame.display.set_caption("Space Invaders")
@@ -148,6 +150,7 @@ class SpaceInvaders:
     def runGame(self):
         # Hauptspiel-Schleife
         running = True
+        pause = False
    
         while running:
             self.screen.fill(self.BLACK)  # Fülle den Bildschirm mit schwarzer Farbe
@@ -156,20 +159,24 @@ class SpaceInvaders:
                     running = False
 
                 if event.type == pygame.KEYDOWN:  # Überprüfe, ob eine Taste gedrückt wurde
-                    if event.key == pygame.K_LEFT:  # Überprüfe, ob die linke Pfeiltaste gedrückt wurde
-                        self.playerX_change = -5  # Bewege den Spieler nach links
-                    if event.key == pygame.K_RIGHT:  # Überprüfe, ob die rechte Pfeiltaste gedrückt wurde
-                        self.playerX_change = 5  # Bewege den Spieler nach rechts
-                    if event.key == pygame.K_UP:
-                        self.playerY_change = -5
-                    if event.key == pygame.K_DOWN:
-                        self.playerY_change = 5
-                    if event.key == pygame.K_SPACE:  # Überprüfe, ob die Leertaste gedrückt wurde
-                        if self.bullet_state == "ready":
-                            self.bulletX = self.playerX  # Setze die Kugelposition auf die Spielerposition
-                            self.bulletY = self.playerY  # Setze die Kugelposition auf die Spielerposition
+                    if event.key == pygame.K_ESCAPE:  # Überprüfe, ob die Escape-Taste gedrückt wurde
+                        pause = True  # Setze die Pause-Variable auf True
 
-                            self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
+                    if not pause:
+                        if event.key == pygame.K_LEFT:  # Überprüfe, ob die linke Pfeiltaste gedrückt wurde
+                            self.playerX_change = -5  # Bewege den Spieler nach links
+                        if event.key == pygame.K_RIGHT:  # Überprüfe, ob die rechte Pfeiltaste gedrückt wurde
+                            self.playerX_change = 5  # Bewege den Spieler nach rechts
+                        if event.key == pygame.K_UP:
+                            self.playerY_change = -5
+                        if event.key == pygame.K_DOWN:
+                            self.playerY_change = 5
+                        if event.key == pygame.K_SPACE:  # Überprüfe, ob die Leertaste gedrückt wurde
+                            if self.bullet_state == "ready":
+                                self.bulletX = self.playerX  # Setze die Kugelposition auf die Spielerposition
+                                self.bulletY = self.playerY  # Setze die Kugelposition auf die Spielerposition
+
+                                self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
 
                       
                 if event.type == pygame.KEYUP:  # Überprüfe, ob eine Taste losgelassen wurde
@@ -178,21 +185,28 @@ class SpaceInvaders:
                     if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                         self.playerY_change = 0
 
-            self.movePlayer()
-            self.moveBullet()
-            self.moveEnemies()
+                if event.type == pygame.MOUSEBUTTONDOWN and pause:
+                    if self.splashScreen.is_continue_button_clicked(event.pos):
+                        pause = False
 
-            if self.bulletY <= 0:
-                self.bulletY = 480  # Setze die Kugelposition zurück
-                self.bullet_state = "ready"  # Setze den Kugelzustand zurück
-
-            if self.bullet_state == "fire":
-                self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
+            if not pause:
+                self.movePlayer()
                 self.moveBullet()
+                self.moveEnemies()
 
-            self.drawPlayer(self.playerX, self.playerY)  # Zeichne den Spieler
-            self.showScore(self.textX, self.textY)  # Zeige den Punktestand
-            
+                if self.bulletY <= 0:
+                    self.bulletY = 480  # Setze die Kugelposition zurück
+                    self.bullet_state = "ready"  # Setze den Kugelzustand zurück
+
+                if self.bullet_state == "fire":
+                    self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
+                    self.moveBullet()
+
+                self.drawPlayer(self.playerX, self.playerY)  # Zeichne den Spieler
+                self.showScore(self.textX, self.textY)  # Zeige den Punktestand
+            else:
+                self.splashScreen.draw()
+
             pygame.display.update()  # Aktualisiere den Bildschirm
             self.clock.tick(60)
             
