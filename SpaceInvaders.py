@@ -90,10 +90,12 @@ class SpaceInvaders:
         self.screen.blit(self.enemyImg[i], (x, y))  # Zeichnen des Gegners auf dem Bildschirm
 
 
-    def fire_bullet(self, x, y):
+    def fire_bullet(self):
+        self.bulletX = self.playerX  # Setze die Kugelposition auf die Spielerposition
+        self.bulletY = self.playerY
         global bullet_state
         bullet_state = "fire"  # Ändere den Zustand der Kugel zu "fire"
-        self.screen.blit(self.bulletImg, (x + 16, y + 10))  # Zeichnen der Kugel auf dem Bildschirm
+        self.screen.blit(self.bulletImg, (self.bulletX + 16, self.bulletY + 10))  # Zeichnen der Kugel auf dem Bildschirm
 
     def moveBullet(self):
         self.bulletY -= self.bulletY_change  # Bewege die Kugel nach oben
@@ -173,10 +175,7 @@ class SpaceInvaders:
                             self.playerY_change = 5
                         if event.key == pygame.K_SPACE:  # Überprüfe, ob die Leertaste gedrückt wurde
                             if self.bullet_state == "ready":
-                                self.bulletX = self.playerX  # Setze die Kugelposition auf die Spielerposition
-                                self.bulletY = self.playerY  # Setze die Kugelposition auf die Spielerposition
-
-                                self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
+                                self.fire_bullet()  # Feuere die Kugel ab
 
                       
                 if event.type == pygame.KEYUP:  # Überprüfe, ob eine Taste losgelassen wurde
@@ -185,9 +184,14 @@ class SpaceInvaders:
                     if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                         self.playerY_change = 0
 
-                if event.type == pygame.MOUSEBUTTONDOWN and pause:
-                    if self.splashScreen.is_continue_button_clicked(event.pos):
-                        pause = False
+                if event.type == pygame.MOUSEBUTTONDOWN: 
+                    if pause:
+                        if self.splashScreen.is_continue_button_clicked(event.pos):
+                            pause = False
+                    else:
+                        if self.bullet_state == "ready":
+                            self.fire_bullet()  # Feuere die Kugel ab
+
 
             if not pause:
                 self.movePlayer()
