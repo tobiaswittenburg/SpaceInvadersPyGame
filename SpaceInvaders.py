@@ -2,6 +2,7 @@ import pygame  # Importiere das Pygame-Modul
 import random  # Importiere das Random-Modul für zufällige Positionen
 from SplashScreen import SplashScreen  # Importiere die SplashScreen-Klasse
 from Enemy import Enemy  # Importiere die Enemy-Klasse
+from Player import Player  # Importiere die Player-Klasse
 
 class SpaceInvaders:
 
@@ -11,6 +12,7 @@ class SpaceInvaders:
     BULLET_SIZE = (20,20)
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
+    NUMBER_OF_ENEMIES = 6
 
     def __init__(self):
         self.initPyGame()
@@ -31,23 +33,12 @@ class SpaceInvaders:
         pygame.display.set_icon(self.icon)
 
     def initGame(self):
-        # Spieler
-        self.playerImg = pygame.image.load('img/player.png')  # Lade das Spieler-Bild
-        self.playerImg = pygame.transform.scale(self.playerImg, self.PLAYER_SIZE)
-        self.playerX = 370  # Anfangsposition des Spielers auf der X-Achse
-        self.playerY = 480  # Anfangsposition des Spielers auf der Y-Achse
+        self.player = Player('img/player.png', 370, 480, self.PLAYER_SIZE, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+
         self.playerX_change = 0  # Bewegung des Spielers auf der X-Achse
         self.playerY_change = 0
 
-        # Gegner
-        self.enemyImg = []
-        self.enemyX = []
-        self.enemyY = []
-        self.enemyX_change = []
-        self.enemyY_change = []
-        self.num_of_enemies = 6  # Anzahl der Gegner
-
-        self.enemies = [Enemy('img/enemy.png', self.SCREEN_WIDTH, self.SCREEN_HEIGHT) for _ in range(6)]
+        self.enemies = [Enemy('img/enemy.png', self.SCREEN_WIDTH, self.SCREEN_HEIGHT) for _ in range(self.NUMBER_OF_ENEMIES)]
 
         # Kugel
         self.bulletImg = pygame.image.load('img/bullet.png')  # Lade das Kugel-Bild
@@ -74,35 +65,16 @@ class SpaceInvaders:
     def drawGameOverText(self):
         self.over_text = self.over_font.render("GAME OVER", True, (255, 255, 255))  # Rendern des Spielende-Textes
         self.screen.blit(self.over_text, (200, 250))  # Zeichnen des Spielende-Textes auf dem Bildschirm
-        
-
-    def drawPlayer(self, x, y):
-        self.screen.blit(self.playerImg, (x, y))  # Zeichnen des Spielers auf dem Bildschirm
 
     def fire_bullet(self):
-        self.bulletX = self.playerX  # Setze die Kugelposition auf die Spielerposition
-        self.bulletY = self.playerY
+        self.bulletX = self.player.x  # Setze die Kugelposition auf die Spielerposition
+        self.bulletY = self.player.y
         global bullet_state
         bullet_state = "fire"  # Ändere den Zustand der Kugel zu "fire"
         self.screen.blit(self.bulletImg, (self.bulletX + 16, self.bulletY + 10))  # Zeichnen der Kugel auf dem Bildschirm
 
     def moveBullet(self):
         self.bulletY -= self.bulletY_change  # Bewege die Kugel nach oben
-
-    def movePlayer(self):
-        # Aktualisiere die Spielerposition
-        self.playerX += self.playerX_change  
-        self.playerY += self.playerY_change
-
-        if self.playerX <= 0:
-            self.playerX = 0  # Begrenze die Spielerposition auf der linken Seite
-        elif self.playerX >= self.SCREEN_WIDTH:
-            self.playerX = self.SCREEN_WIDTH-20  # Begrenze die Spielerposition auf der rechten Seite
-
-        if self.playerY <= 0:
-            self.playerY = 0
-        elif self.playerY >= self.SCREEN_HEIGHT - 20:
-            self.playerY = self.SCREEN_HEIGHT - 20
 
     def isCollision(self, enemyX, enemyY, bulletX, bulletY):
         distance = ((enemyX - bulletX)**2 + (enemyY - bulletY)**2)**0.5  # Berechnung der Entfernung zwischen Kugel und Gegner
@@ -154,7 +126,9 @@ class SpaceInvaders:
                             self.fire_bullet()  # Feuere die Kugel ab
 
             if not pause:
-                self.movePlayer()
+                self.player.move(self.playerX_change, self.playerY_change)
+
+                ##self.movePlayer()
                 self.moveBullet()
                 # self.moveEnemies()
 
@@ -185,7 +159,7 @@ class SpaceInvaders:
                     self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
                     self.moveBullet()
 
-                self.drawPlayer(self.playerX, self.playerY)  # Zeichne den Spieler
+                self.player.draw(self.screen)  # Zeichne den Spieler
                 self.showScore(self.textX, self.textY)  # Zeige den Punktestand
             else:
                 self.splashScreen.draw()
