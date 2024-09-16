@@ -128,9 +128,7 @@ class SpaceInvaders:
             if not pause:
                 self.player.move(self.playerX_change, self.playerY_change)
 
-                ##self.movePlayer()
                 self.moveBullet()
-                # self.moveEnemies()
 
                 for enemy in self.enemies:
                     enemy.move()
@@ -148,8 +146,6 @@ class SpaceInvaders:
                         enemy.reset_position()  # Setze die Gegnerposition zurück
 
                     enemy.draw(self.screen)  # Zeichne den Gegner
-
-
 
                 if self.bulletY <= 0:
                     self.bulletY = 480  # Setze die Kugelposition zurück
