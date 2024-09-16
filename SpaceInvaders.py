@@ -3,6 +3,7 @@ import random  # Importiere das Random-Modul für zufällige Positionen
 from SplashScreen import SplashScreen  # Importiere die SplashScreen-Klasse
 from Enemy import Enemy  # Importiere die Enemy-Klasse
 from Player import Player  # Importiere die Player-Klasse
+from Bullet import Bullet  # Importiere die Bullet-Klasse
 
 class SpaceInvaders:
 
@@ -34,20 +35,12 @@ class SpaceInvaders:
 
     def initGame(self):
         self.player = Player('img/player.png', 370, 480, self.PLAYER_SIZE, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.enemies = [Enemy('img/enemy.png', self.SCREEN_WIDTH, self.SCREEN_HEIGHT) for _ in range(self.NUMBER_OF_ENEMIES)]
+        self.bullet = Bullet('img/bullet.png', 0, 480, self.BULLET_SIZE, 10)
+
 
         self.playerX_change = 0  # Bewegung des Spielers auf der X-Achse
         self.playerY_change = 0
-
-        self.enemies = [Enemy('img/enemy.png', self.SCREEN_WIDTH, self.SCREEN_HEIGHT) for _ in range(self.NUMBER_OF_ENEMIES)]
-
-        # Kugel
-        self.bulletImg = pygame.image.load('img/bullet.png')  # Lade das Kugel-Bild
-        self.bulletImg = pygame.transform.scale(self.bulletImg, self.BULLET_SIZE)
-        self.bulletX = 0  # Anfangsposition der Kugel auf der X-Achse
-        self.bulletY = 480  # Anfangsposition der Kugel auf der Y-Achse
-        self.bulletX_change = 0  # Bewegung der Kugel auf der X-Achse
-        self.bulletY_change = 10  # Bewegung der Kugel auf der Y-Achse
-        self.bullet_state = "ready"  # Zustand der Kugel ("ready" bedeutet, dass die Kugel nicht sichtbar ist)
 
         # Punkte
         self.score_value = 0  # Anfangswert der Punkte
@@ -65,16 +58,6 @@ class SpaceInvaders:
     def drawGameOverText(self):
         self.over_text = self.over_font.render("GAME OVER", True, (255, 255, 255))  # Rendern des Spielende-Textes
         self.screen.blit(self.over_text, (200, 250))  # Zeichnen des Spielende-Textes auf dem Bildschirm
-
-    def fire_bullet(self):
-        self.bulletX = self.player.x  # Setze die Kugelposition auf die Spielerposition
-        self.bulletY = self.player.y
-        global bullet_state
-        bullet_state = "fire"  # Ändere den Zustand der Kugel zu "fire"
-        self.screen.blit(self.bulletImg, (self.bulletX + 16, self.bulletY + 10))  # Zeichnen der Kugel auf dem Bildschirm
-
-    def moveBullet(self):
-        self.bulletY -= self.bulletY_change  # Bewege die Kugel nach oben
 
     def isCollision(self, enemyX, enemyY, bulletX, bulletY):
         distance = ((enemyX - bulletX)**2 + (enemyY - bulletY)**2)**0.5  # Berechnung der Entfernung zwischen Kugel und Gegner
@@ -108,8 +91,8 @@ class SpaceInvaders:
                         if event.key == pygame.K_DOWN:
                             self.playerY_change = 5
                         if event.key == pygame.K_SPACE:  # Überprüfe, ob die Leertaste gedrückt wurde
-                            if self.bullet_state == "ready":
-                                self.fire_bullet()  # Feuere die Kugel ab
+                            if self.bullet.state == "ready":
+                                self.bullet.fire(self.player.x, self.player.y)  # Feuere die Kugel ab
                       
                 if event.type == pygame.KEYUP:  # Überprüfe, ob eine Taste losgelassen wurde
                     if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -122,13 +105,13 @@ class SpaceInvaders:
                         if self.splashScreen.is_continue_button_clicked(event.pos):
                             pause = False
                     else:
-                        if self.bullet_state == "ready":
+                        if self.bullet.state == "ready":
                             self.fire_bullet()  # Feuere die Kugel ab
 
             if not pause:
                 self.player.move(self.playerX_change, self.playerY_change)
 
-                self.moveBullet()
+                self.bullet.move()
 
                 for enemy in self.enemies:
                     enemy.move()
@@ -138,23 +121,16 @@ class SpaceInvaders:
                         self.drawGameOverText()  # Zeige den Spielende-Text
                         break
 
-                    collision = self.isCollision(enemy.x, enemy.y, self.bulletX, self.bulletY)  # Überprüfe auf Kollision
+                    collision = self.isCollision(enemy.x, enemy.y, self.bullet.x, self.bullet.y)  # Überprüfe auf Kollision
                     if collision:
-                        self.bulletY = 480  # Setze die Kugelposition zurück
-                        self.bullet_state = "ready"  # Setze den Kugelzustand zurück
+                        self.bullet.y = 480  # Setze die Kugelposition zurück
+                        self.bullet.state = "ready"  # Setze den Kugelzustand zurück
                         self.score_value += 1  # Erhöhe den Punktestand
                         enemy.reset_position()  # Setze die Gegnerposition zurück
 
                     enemy.draw(self.screen)  # Zeichne den Gegner
 
-                if self.bulletY <= 0:
-                    self.bulletY = 480  # Setze die Kugelposition zurück
-                    self.bullet_state = "ready"  # Setze den Kugelzustand zurück
-
-                if self.bullet_state == "fire":
-                    self.fire_bullet(self.bulletX, self.bulletY)  # Feuere die Kugel ab
-                    self.moveBullet()
-
+                self.bullet.draw(self.screen)  # Zeichne die Kugel
                 self.player.draw(self.screen)  # Zeichne den Spieler
                 self.showScore(self.textX, self.textY)  # Zeige den Punktestand
             else:
