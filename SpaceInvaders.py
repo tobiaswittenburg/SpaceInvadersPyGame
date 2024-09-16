@@ -38,7 +38,6 @@ class SpaceInvaders:
         self.enemies = [Enemy('img/enemy.png', self.SCREEN_WIDTH, self.SCREEN_HEIGHT) for _ in range(self.NUMBER_OF_ENEMIES)]
         self.bullet = Bullet('img/bullet.png', 0, 480, self.BULLET_SIZE, 10)
 
-
         self.playerX_change = 0  # Bewegung des Spielers auf der X-Achse
         self.playerY_change = 0
 
